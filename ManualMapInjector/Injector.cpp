@@ -3,27 +3,27 @@
 
 #pragma comment(lib, "BlackBone.lib")
 
-#pragma comment(linker, "/EXPORT:InjectFile=?InjectFile@@YA_NPB_WII@Z")
-#pragma comment(linker, "/EXPORT:InjectRaw=?InjectRaw@@YA_NIPAEII_N@Z")
-
 using namespace blackbone;
 
-bool InjectFile(const wchar_t* szDll, unsigned int pId, unsigned int flags)
+extern "C"
 {
-	Process processToInject;
+	__declspec(dllexport) int _stdcall InjectFile(const wchar_t* szDll, unsigned int pId, unsigned int flags)
+	{
+		Process processToInject;
 
-	if (!NT_SUCCESS(processToInject.Attach(pId)))
-		return false;
+		if (!NT_SUCCESS(processToInject.Attach(pId)))
+			return 1;
 
-	return processToInject.mmap().MapImage(std::wstring(szDll), eLoadFlags(flags)).success();
-}
+		return processToInject.mmap().MapImage(std::wstring(szDll), eLoadFlags(flags)).success() ? 0 : 2;
+	}
 
-bool InjectRaw(size_t size, byte* buffer, unsigned int pId, unsigned int flags, bool asImage)
-{
-	Process processToInject;
+	__declspec(dllexport) int _stdcall InjectRaw(size_t size, byte* buffer, unsigned int pId, unsigned int flags, bool asImage)
+	{
+		Process processToInject;
 
-	if (!NT_SUCCESS(processToInject.Attach(pId)))
-		return false;
+		if (!NT_SUCCESS(processToInject.Attach(pId)))
+			return 1;
 
-	return processToInject.mmap().MapImage(size, buffer, asImage, eLoadFlags(flags)).success();
+		return processToInject.mmap().MapImage(size, buffer, asImage, eLoadFlags(flags)).success()? 0 : 2;
+	}
 }
